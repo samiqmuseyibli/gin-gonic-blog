@@ -76,3 +76,7 @@ func (server *Server) AddToWishlist(c *gin.Context) {
 		"response": wishlistCreated,
 	})
 }
+
+func (server *Server) DeleteFromWishlist(c *gin.Context) {
+
+}
