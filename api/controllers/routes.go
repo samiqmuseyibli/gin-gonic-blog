@@ -41,5 +41,8 @@ func (s *Server) initializeRoutes() {
 		v1.GET("/comments/:id", s.GetComments)
 		v1.PUT("/comments/:id", middlewares.TokenAuthMiddleware(), s.UpdateComment)
 		v1.DELETE("/comments/:id", middlewares.TokenAuthMiddleware(), s.DeleteComment)
+
+		//wishlist
+		v1.POST("/wishlist/:id", middlewares.TokenAuthMiddleware(), s.AddToWishlist)
 	}
 }

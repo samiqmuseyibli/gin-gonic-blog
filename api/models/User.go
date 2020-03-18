@@ -18,7 +18,7 @@ type User struct {
 	ID         uint32    `gorm:"primary_key;auto_increment" json:"id"`
 	Username   string    `gorm:"size:255;not null;unique" json:"username"`
 	Email      string    `gorm:"size:100;not null;unique" json:"email"`
-	Password   string    `gorm:"size:100;not null;" json:"password"`
+	Password   string    `gorm:"size:100;not null;" json:"password,omitempty"`
 	AvatarPath string    `gorm:"size:255;null;" json:"avatar_path"`
 	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
@@ -47,6 +47,8 @@ func (u *User) AfterFind() (err error) {
 	if u.AvatarPath != "" {
 		u.AvatarPath = os.Getenv("DO_SPACES_URL") + u.AvatarPath
 	}
+
+	//u.Password = ""
 	//dont return the user password
 	//u.Password = ""
 	return nil
