@@ -44,5 +44,6 @@ func (s *Server) initializeRoutes() {
 
 		//wishlist
 		v1.POST("/wishlist/:id", middlewares.TokenAuthMiddleware(), s.AddToWishlist)
+		v1.DELETE("/wishlist/:id", middlewares.TokenAuthMiddleware(), s.DeleteFromWishlist)
 	}
 }
