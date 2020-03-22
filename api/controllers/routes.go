@@ -45,6 +45,6 @@ func (s *Server) initializeRoutes() {
 		//wishlist
 		v1.POST("/wishlist/:id", middlewares.TokenAuthMiddleware(), s.AddToWishlist)
 		v1.DELETE("/wishlist/:id", middlewares.TokenAuthMiddleware(), s.DeleteFromWishlist)
-		v1.GET("/pagination", s.Pagination)
+		v1.GET("/pagination", s.Pagination) //sample  http://127.0.0.1:8088/api/v1/pagination?limit=17&title.contains=xs&sort=title asc&id.in=707,5449
 	}
 }

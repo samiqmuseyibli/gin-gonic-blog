@@ -367,11 +367,9 @@ func (s *Server) Pagination(context *gin.Context) {
 	// search query params
 	searchQueryParams := ""
 
-	/*
-		for _, search := range pg.Searchs {
-			searchQueryParams += fmt.Sprintf("&%s.%s=%s", search.Column, search.Action, search.Query)
-		}
-	*/
+	for _, search := range pg.Searchs {
+		searchQueryParams += fmt.Sprintf("&%s.%s=%s", search.Column, search.Action, search.Query)
+	}
 
 	// set first & last page pagination response
 	data.FirstPage = fmt.Sprintf("%s?limit=%d&page=%d&sort=%s", urlPath, pg.Limit, 0, pg.Sort) + searchQueryParams
