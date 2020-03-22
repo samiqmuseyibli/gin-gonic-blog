@@ -11,6 +11,7 @@ import (
 	"github.com/samigmuseyibli/gin-gonic-blog/api/auth"
 	"github.com/samigmuseyibli/gin-gonic-blog/api/models"
 	"github.com/samigmuseyibli/gin-gonic-blog/api/utils/formaterror"
+	"github.com/samigmuseyibli/gin-gonic-blog/api/utils/pagination"
 )
 
 func (server *Server) CreatePost(c *gin.Context) {
@@ -342,5 +343,57 @@ func (server *Server) GetUserPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":   http.StatusOK,
 		"response": posts,
+	})
+}
+
+func (s *Server) Pagination(context *gin.Context) {
+	pg := pagination.GeneratePaginationRequest(context)
+	post := models.Post{}
+	operationResult, totalPages, err := post.Paginate(s.DB, pg)
+
+	if operationResult == nil {
+		context.JSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"data":   err,
+		})
+		return
+	}
+
+	var data = operationResult
+
+	// get current url path
+	urlPath := context.Request.URL.Path
+
+	// search query params
+	searchQueryParams := ""
+
+	/*
+		for _, search := range pg.Searchs {
+			searchQueryParams += fmt.Sprintf("&%s.%s=%s", search.Column, search.Action, search.Query)
+		}
+	*/
+
+	// set first & last page pagination response
+	data.FirstPage = fmt.Sprintf("%s?limit=%d&page=%d&sort=%s", urlPath, pg.Limit, 0, pg.Sort) + searchQueryParams
+	data.LastPage = fmt.Sprintf("%s?limit=%d&page=%d&sort=%s", urlPath, pg.Limit, totalPages, pg.Sort) + searchQueryParams
+
+	if data.Page > 0 {
+		// set previous page pagination response
+		data.PreviousPage = fmt.Sprintf("%s?limit=%d&page=%d&sort=%s", urlPath, pg.Limit, data.Page-1, pg.Sort) + searchQueryParams
+	}
+
+	if data.Page < totalPages {
+		// set next page pagination response
+		data.NextPage = fmt.Sprintf("%s?limit=%d&page=%d&sort=%s", urlPath, pg.Limit, data.Page+1, pg.Sort) + searchQueryParams
+	}
+
+	if data.Page > totalPages {
+		// reset previous page
+		data.PreviousPage = ""
+	}
+
+	context.JSON(http.StatusOK, gin.H{
+		"status": http.StatusOK,
+		"data":   data,
 	})
 }

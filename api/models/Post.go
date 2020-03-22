@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"html"
+	"math"
 	"strings"
 	"time"
 
@@ -52,7 +53,7 @@ func (p *Post) Validate() map[string]string {
 
 func (p *Post) SavePost(db *gorm.DB) (*Post, error) {
 	var err error
-	err = db.Debug().Model(&Post{}).Create(&p).Error
+
 	if err != nil {
 		return &Post{}, err
 	}
@@ -68,7 +69,7 @@ func (p *Post) SavePost(db *gorm.DB) (*Post, error) {
 func (p *Post) FindAllPosts(db *gorm.DB) (*[]Post, error) {
 	var err error
 	posts := []Post{}
-	err = db.Debug().Model(&Post{}).Limit(100).Order("created_at desc").Find(&posts).Error
+	err = db.Debug().Model(&Post{}).Limit(10000).Order("created_at desc").Find(&posts).Error
 	if err != nil {
 		return &[]Post{}, err
 	}
@@ -87,6 +88,82 @@ func (p *Post) FindAllPosts(db *gorm.DB) (*[]Post, error) {
 
 	return &posts, nil
 }
+
+//pagination
+func (p *Post) Paginate(r *gorm.DB, pagination *Pagination) (*Pagination, int, error) {
+	//var contacts models.Contacts
+	totalRows, totalPages, fromRow, toRow := 0, 0, 0, 0
+	offset := pagination.Page * pagination.Limit
+	// get data with limit, offset & order
+	find := r.Limit(pagination.Limit).Offset(offset).Order(pagination.Sort)
+	// generate where query
+
+	/*
+		searchs := pagination.Searchs
+		if searchs != nil {
+			for _, value := range searchs {
+				column := value.Column
+				action := value.Action
+				query := value.Query
+
+				switch action {
+				case "equals":
+					whereQuery := fmt.Sprintf("%s = ?", column)
+					find = find.Where(whereQuery, query)
+					break
+				case "contains":
+					whereQuery := fmt.Sprintf("%s LIKE ?", column)
+					find = find.Where(whereQuery, "%"+query+"%")
+					break
+				case "in":
+					whereQuery := fmt.Sprintf("%s IN (?)", column)
+					queryArray := strings.Split(query, ",")
+					find = find.Where(whereQuery, queryArray)
+					break
+
+				}
+			}
+		}
+	*/
+	posts := []Post{}
+	find = find.Find(&posts)
+	// has error find data
+	errFind := find.Error
+	if errFind != nil {
+		return nil, 0, errFind
+	}
+	pagination.Rows = posts
+	// count all data
+	errCount := r.Model(&Post{}).Count(&totalRows).Error
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+	pagination.TotalRows = totalRows
+	// calculate total pages
+	totalPages = int(math.Ceil(float64(totalRows)/float64(pagination.Limit))) - 1
+	if pagination.Page == 0 {
+		// set from & to row on first page
+		fromRow = 1
+		toRow = pagination.Limit
+	} else {
+		if pagination.Page <= totalPages {
+			// calculate from & to row
+			fromRow = pagination.Page*pagination.Limit + 1
+			toRow = (pagination.Page + 1) * pagination.Limit
+		}
+	}
+
+	if toRow > totalRows {
+		// set to row with total rows
+		toRow = totalRows
+	}
+	pagination.FromRow = fromRow
+	pagination.ToRow = toRow
+
+	return pagination, totalPages, nil
+}
+
+//end pagination
 
 func (p *Post) FindPostByID(db *gorm.DB, pid uint64) (*Post, error) {
 	var err error
